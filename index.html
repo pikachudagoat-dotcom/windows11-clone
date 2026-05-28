@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Web Edition</title>
+    <style>
+        /* Base Styling */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; user-select: none; }
+        body {
+            background: url('https://unsplash.com') no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Desktop Icons Area */
+        .desktop { display: flex; flex-direction: column; gap: 15px; padding: 20px; height: calc(100vh - 48px); align-items: flex-start; }
+        .icon { width: 80px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 8px; border-radius: 4px; border: 1px solid transparent; transition: all 0.15s; }
+        .icon:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); }
+        .icon img { width: 44px; height: 44px; margin-bottom: 6px; }
+        .icon span { color: white; font-size: 12px; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-weight: 400; }
+
+        /* Window App Frame */
+        .window {
+            position: absolute; top: 15%; left: 25%; width: 550px; height: 380px;
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            display: none; flex-direction: column; overflow: hidden; z-index: 10; animation: windowOpen 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+        @keyframes windowOpen { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .window-header { background: rgba(243, 243, 243, 0.6); padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.08); cursor: move; }
+        .win-title { font-size: 13px; font-weight: 500; color: #1c1c1c; }
+        .win-controls { display: flex; gap: 4px; }
+        .control-btn { width: 28px; height: 24px; background: transparent; border: none; font-size: 14px; cursor: pointer; border-radius: 4px; color: #333; display: flex; align-items: center; justify-content: center; }
+        .control-btn:hover { background: rgba(0, 0, 0, 0.05); }
+        .control-btn.close:hover { background: #e81123; color: white; }
+        .window-content { padding: 20px; flex-grow: 1; font-size: 14px; color: #202020; overflow-y: auto; background: rgba(255, 255, 255, 0.5); }
+
+        /* Windows 11 Centered Taskbar */
+        .taskbar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 48px;
+            background: rgba(243, 243, 243, 0.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; align-items: center; border-top: 1px solid rgba(0,0,0,0.06); z-index: 1000; padding: 0 12px;
+        }
+        .taskbar-center { display: flex; gap: 6px; position: absolute; left: 50%; transform: translateX(-50%); align-items: center; }
+        .tb-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.2s; cursor: pointer; }
+        .tb-icon:hover { background: rgba(255, 255, 255, 0.6); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .tb-icon img { width: 26px; height: 26px; }
+        
+        /* System Tray & Clock */
+        .system-tray { margin-left: auto; display: flex; align-items: center; gap: 12px; padding: 4px 10px; border-radius: 4px; transition: 0.2s; cursor: pointer; }
+        .system-tray:hover { background: rgba(255, 255, 255, 0.6); }
+        .tray-icons img { width: 16px; height: 16px; vertical-align: middle; margin-right: 8px; opacity: 0.75; }
+        .clock { font-size: 12px; text-align: right; color: #1c1c1c; font-weight: 400; line-height: 1.3; }
+
+        /* Start Menu Interface */
+        .start-menu {
+            position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+            width: 520px; height: 600px; background: rgba(243, 243, 243, 0.86); backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); display: none; flex-direction: column; padding: 32px; z-index: 999;
+            animation: startUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+        }
+        @keyframes startUp { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        .search-bar { width: 100%; padding: 8px 16px; background: white; border: 1px solid rgba(0,0,0,0.1); border-bottom: 2px solid #0067b8; border-radius: 4px; font-size: 14px; outline: none; margin-bottom: 24px; }
+        .start-section-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 16px; }
+        .apps-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-bottom: auto; }
+        .start-app { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; padding: 10px; border-radius: 4px; transition: 0.15s; }
+        .start-app:hover { background: rgba(255, 255, 255, 0.6); }
+        .start-app img { width: 32px; height: 32px; margin-bottom: 8px; }
+        .start-app span { font-size: 11px; color: #202020; }
+        .start-footer { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); margin: 0 -32px -32px -32px; padding: 16px 32px; border-top: 1px solid rgba(0,0,0,0.05); border-radius: 0 0 8px 8px; }
+        .profile { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 500; color: #333; }
+        .profile-img { width: 28px; height: 28px; background: #0067b8; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .power-btn { background: transparent; border: none; cursor: pointer; }
+        .power-btn img { width: 18px; height: 18px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <!-- Desktop Area -->
+    <div class="desktop" onclick="closeStartMenuOutside(event)">
+        <div class="icon" onclick="openWindow('This PC', '<b>Local Disk (C:)</b><br><br>System files: 14.2 GB<br>Free Space: 112 GB<br><br><i>No real storage accessed. This environment is running directly inside your browser.</i>')">
+            <img src="https://icons8.com" alt="This PC">
+            <span>This PC</span>
+        </div>
+        <div class="icon" onclick="openWindow('Recycle Bin', 'The Recycle Bin is empty. Delete some desktop components inside the code if you want to clean up!')">
+            <img src="https://icons8.com" alt="Recycle Bin">
+            <span>Recycle Bin</span>
+        </div>
+    </div>
+
+    <!-- Popup Windows Frame -->
+    <div class="window" id="appWindow">
+        <div class="window-header" id="windowHeader">
+            <span class="win-title" id="winTitle">System Application</span>
+            <div class="win-controls">
+                <button class="control-btn">—</button>
+                <button class="control-btn">⬜</button>
+                <button class="control-btn close" onclick="closeWindow()">×</button>
+            </div>
+        </div>
+        <div class="window-content" id="winContent">
+            Application data...
+        </div>
+    </div>
+
+    <!-- Windows 11 Start Menu -->
+    <div class="start-menu" id="startMenu">
+        <input type="text" class="search-bar" placeholder="Type here to search...">
+        <div class="start-section-title">Pinned Apps</div>
+        <div class="apps-grid">
+            <div class="start-app" onclick="toggleStart(); openWindow('Edge Browser', '<h3>Welcome to Microsoft Edge</h3><br><p>Browsing safely inside your simulation. Internet connection simulated successfully.</p>')">
+                <img src="https://icons8.com" alt="Edge">
+                <span>Edge</span>
+            </div>
+            <div class="start-app" onclick="toggleStart(); openWindow('File Explorer', '<h3>Quick Access</h3><br><p>📁 Documents</p><p>📁 Downloads</p><p>📁 Pictures</p>')">
+                <img src="https://icons8.com" alt="Files">
+                <span>Explorer</span>
+            </div>
+            <div class="start-app" onclick="toggleStart(); openWindow('Settings', '<h3>Windows Settings</h3><br><p><b>System Version:</b> Windows 11 Web 2026</p><p><b>Hardware:</b> ChromeOS Chromebook Emulation</p>')">
+                <img src="https://icons8.com" alt="Settings">
+                <span>Settings</span>
+            </div>
+            <div class="start-app" onclick="toggleStart(); openWindow('Notepad', '<h3>Notepad</h3><br><textarea style=&quot;width:100%; height:150px; padding:8px; border:1px solid #ccc; font-family:monospace;&quot; placeholder=&quot;Start typing your notes...&quot;></textarea>')">
+                <img src="https://icons8.com" alt="Notepad">
+                <span>Notepad</span>
+            </div>
+        </div>
+        <div class="start-footer">
+            <div class="profile">
+                <div class="profile-img">U</div>
+                <span>Chromebook User</span>
+            </div>
+            <button class="power-btn" onclick="alert('Shutting down simulator... Just kidding! Press OK to stay.')">
+                <img src="https://icons8.com" alt="Power">
+            </button>
+        </div>
+    </div>
+
